@@ -1,0 +1,429 @@
+:root {
+  --ink: #14201c;
+  --muted: #5f716b;
+  --line: #dce5df;
+  --paper: #f6f8f4;
+  --panel: #ffffff;
+  --field: #eef4ef;
+  --green: #247a4d;
+  --green-dark: #155f3c;
+  --yellow: #d99a21;
+  --red: #c14535;
+  --blue: #2f6f99;
+  --shadow: 0 18px 50px rgba(33, 48, 42, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+.button {
+  border: 0;
+  border-radius: 7px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  font-weight: 750;
+}
+
+button.secondary,
+.button.secondary {
+  background: #d8ef78;
+  color: #17251f;
+}
+
+button.danger {
+  background: var(--red);
+}
+
+button:hover,
+.button:hover {
+  background: var(--green-dark);
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px;
+  background: #11231c;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #c9e66a;
+  color: #12221b;
+  font-weight: 900;
+}
+
+.brand span,
+.sidebar-note,
+.nav small {
+  color: #aac5b7;
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+}
+
+.nav a {
+  padding: 12px 14px;
+  border-radius: 7px;
+  color: #dcece5;
+}
+
+.nav a:hover,
+.nav a.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.content {
+  padding: 32px;
+  display: grid;
+  gap: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.topbar h1 {
+  max-width: 920px;
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-weight: 850;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.metric,
+.panel,
+.table-panel,
+.form-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.metric {
+  padding: 18px;
+}
+
+.metric span,
+.metric small {
+  color: var(--muted);
+  display: block;
+}
+
+.metric strong {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 2rem;
+}
+
+.metric.warning strong {
+  color: var(--yellow);
+}
+
+.metric.danger strong {
+  color: var(--red);
+}
+
+.panel,
+.table-panel,
+.form-panel {
+  padding: 18px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 16px;
+}
+
+.bars {
+  display: grid;
+  gap: 12px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 170px minmax(140px, 1fr) 96px;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  font-weight: 800;
+}
+
+.bar-track {
+  height: 34px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--field);
+}
+
+.bar-fill {
+  height: 100%;
+  min-width: 4px;
+  background: var(--blue);
+}
+
+.bar-fill.origin {
+  background: var(--green);
+}
+
+.bar-value {
+  text-align: right;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.insight-list {
+  display: grid;
+  gap: 12px;
+}
+
+.insight,
+.source-card {
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--field);
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.status {
+  display: inline-flex;
+  min-width: 96px;
+  min-height: 30px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 850;
+  font-size: 0.82rem;
+}
+
+.status.approved,
+.status.success {
+  background: #e3f3e5;
+  color: #17633f;
+}
+
+.status.pending,
+.status.skipped {
+  background: #fff2d1;
+  color: #805407;
+}
+
+.status.rejected,
+.status.failed,
+.status.alert {
+  background: #fde4df;
+  color: #9b2c20;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+input,
+select,
+textarea {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--field);
+  color: var(--ink);
+  padding: 10px 12px;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.source-card h3 {
+  margin: 0 0 8px;
+}
+
+.source-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 1040px) {
+  .shell,
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .metrics,
+  .source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .content {
+    padding: 18px;
+  }
+
+  .topbar,
+  .section-head {
+    display: grid;
+  }
+
+  .metrics,
+  .form-grid,
+  .source-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .bar-value {
+    text-align: left;
+  }
+}

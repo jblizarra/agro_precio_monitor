@@ -1,24 +1,59 @@
 # AgroPrecio Monitor
 
-Aplicacion web estatica para comparar precios de supermercado con precios de productor en productos alimentarios.
+MVP full-stack para comparar precios normalizados de supermercados espanoles con precios publicados por productores. Esta version esta preparada para Vercel, Next.js App Router y Supabase.
 
-## Uso
+## Stack
 
-Abre `index.html` en el navegador. La aplicacion incluye datos de muestra, filtros por producto, categoria y supermercado, alertas por margen, exportacion CSV e importacion CSV.
+- Next.js + TypeScript.
+- Supabase Auth/Postgres/RLS.
+- Vercel Cron para `/api/cron/scrape-prices`.
+- Conectores reemplazables para Mercadona, Carrefour y Dia.
 
-## Formato CSV
+## Ejecutar en local
 
-La importacion espera las columnas en este orden:
-
-```csv
-product,categoria,supermercado,precio_productor,precio_lineal,variacion_semanal,provincia
-Tomate pera,Hortalizas,Mercadona,0.72,2.29,4.6,Valencia
+```powershell
+npm install
+npm run dev
 ```
 
-Los precios deben expresarse en euros por kilo o litro, usando punto decimal.
+Abre `http://localhost:3000`.
 
-## Siguientes integraciones
+Sin variables de Supabase, la app usa datos demo para que el dashboard, productor, admin y cron funcionen en modo dry-run.
 
-- Conectores de scraping o API por cadena de supermercado.
-- Fuentes de origen: lonjas, cooperativas, observatorios agrarios o carga manual.
-- Persistencia historica para series temporales y alertas recurrentes.
+## Configuracion Supabase
+
+1. Crea un proyecto en Supabase.
+2. Ejecuta `supabase/schema.sql` en el SQL editor.
+3. Copia `.env.example` a `.env.local`.
+4. Rellena:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+```
+
+## Despliegue en Vercel
+
+1. Conecta el repositorio en Vercel.
+2. Anade las variables de entorno anteriores.
+3. Despliega con el comando por defecto `next build`.
+4. Vercel ejecutara el cron definido en `vercel.json` cada 8 horas.
+
+Para invocar el cron manualmente:
+
+```powershell
+curl -H "Authorization: Bearer <CRON_SECRET>" https://tu-app.vercel.app/api/cron/scrape-prices
+```
+
+## Flujo MVP
+
+- Usuarios anonimos ven comparativas publicas con precios de productor aprobados.
+- Productores envian precios normalizados en euros por kg o litro.
+- Admin aprueba o rechaza precios pendientes.
+- El cron obtiene precios de supermercados mediante conectores. Los conectores actuales son demo y estan disenados para sustituirse por APIs o scraping permitido por cadena.
+
+## Cumplimiento
+
+Antes de activar scraping real para una cadena, revisa `robots.txt`, terminos de uso, frecuencia permitida y disponibilidad de API/feed. Si una cadena no permite captura fiable o permitida, deja su conector desactivado y documenta la razon.
