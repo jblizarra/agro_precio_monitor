@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AgroPrecio Monitor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegacion principal">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">AP</div>
+          <div>
+            <strong>AgroPrecio</strong>
+            <span>Monitor</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Secciones">
+          <a href="#resumen" class="active">Resumen</a>
+          <a href="#comparador">Comparador</a>
+          <a href="#alertas">Alertas</a>
+          <a href="#fuentes">Fuentes</a>
+        </nav>
+
+        <section class="sync-panel" aria-labelledby="sync-title">
+          <h2 id="sync-title">Sincronizacion</h2>
+          <p>Ultima lectura: <strong id="last-sync">16 jun 2026, 18:40</strong></p>
+          <button id="refresh-data" type="button">Actualizar muestra</button>
+        </section>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Seguimiento de precios alimentarios</p>
+            <h1>Comparador entre lineal de supermercado y precio de productor</h1>
+          </div>
+          <div class="top-actions">
+            <label class="file-import">
+              Importar CSV
+              <input id="csv-input" type="file" accept=".csv,text/csv" />
+            </label>
+            <button id="export-csv" type="button">Exportar datos</button>
+          </div>
+        </header>
+
+        <section id="resumen" class="summary-grid" aria-label="Indicadores principales">
+          <article class="metric">
+            <span>Productos</span>
+            <strong id="metric-products">0</strong>
+            <small>referencias vigiladas</small>
+          </article>
+          <article class="metric">
+            <span>Supermercados</span>
+            <strong id="metric-retailers">0</strong>
+            <small>cadenas comparadas</small>
+          </article>
+          <article class="metric warning">
+            <span>Margen medio</span>
+            <strong id="metric-margin">0%</strong>
+            <small>sobre precio productor</small>
+          </article>
+          <article class="metric danger">
+            <span>Alertas</span>
+            <strong id="metric-alerts">0</strong>
+            <small>desviaciones relevantes</small>
+          </article>
+        </section>
+
+        <section class="hero-map" aria-label="Mapa de precios">
+          <div class="map-visual" aria-hidden="true">
+            <span class="node producer">Origen</span>
+            <span class="route route-a"></span>
+            <span class="route route-b"></span>
+            <span class="route route-c"></span>
+            <span class="node retailer one">Madrid</span>
+            <span class="node retailer two">Valencia</span>
+            <span class="node retailer three">Sevilla</span>
+          </div>
+          <div class="map-copy">
+            <h2>Del campo al lineal, con diferencias visibles</h2>
+            <p>La aplicacion agrupa precios de origen, precios publicados por supermercados y variacion semanal para detectar margenes anomalos por producto, provincia y cadena.</p>
+          </div>
+        </section>
+
+        <section id="comparador" class="workspace">
+          <div class="filters" aria-label="Filtros">
+            <label>
+              Producto
+              <select id="product-filter"></select>
+            </label>
+            <label>
+              Categoria
+              <select id="category-filter"></select>
+            </label>
+            <label>
+              Supermercado
+              <select id="retailer-filter"></select>
+            </label>
+            <label>
+              Margen minimo
+              <input id="margin-filter" type="range" min="0" max="500" value="0" />
+              <span id="margin-label">0%</span>
+            </label>
+          </div>
+
+          <div class="comparison-layout">
+            <section class="chart-panel" aria-labelledby="chart-title">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Comparacion actual</p>
+                  <h2 id="chart-title">Precio por kilo o litro</h2>
+                </div>
+                <span id="chart-count">0 registros</span>
+              </div>
+              <div id="price-chart" class="price-chart" aria-live="polite"></div>
+            </section>
+
+            <section class="insight-panel" aria-labelledby="insight-title">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Lectura rapida</p>
+                  <h2 id="insight-title">Brecha origen-lineal</h2>
+                </div>
+              </div>
+              <div id="insights" class="insights"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="alertas" class="table-section">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Detalle operativo</p>
+              <h2>Productos monitorizados</h2>
+            </div>
+            <span id="result-count">0 filas</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Categoria</th>
+                  <th>Supermercado</th>
+                  <th>Origen</th>
+                  <th>Lineal</th>
+                  <th>Margen</th>
+                  <th>Semana</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="price-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="fuentes" class="sources">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Preparado para automatizar</p>
+              <h2>Fuentes de datos</h2>
+            </div>
+          </div>
+          <div class="source-grid">
+            <article>
+              <h3>Supermercados</h3>
+              <p>Conectores previstos para Mercadona, Carrefour, Alcampo, Dia, Lidl y Eroski, con normalizacion por unidad, formato y provincia.</p>
+            </article>
+            <article>
+              <h3>Productores</h3>
+              <p>Entrada manual o CSV para lonjas, cooperativas, observatorios agrarios y contratos de productores.</p>
+            </article>
+            <article>
+              <h3>Alertas</h3>
+              <p>Reglas por margen, subida semanal, diferencia entre cadenas y caida del precio de origen no trasladada al consumidor.</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
