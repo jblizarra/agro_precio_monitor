@@ -1,12 +1,18 @@
 import { submitProducerPrice } from "@/app/actions";
-import { getProducerPrices, getProducts } from "@/lib/data";
+import { getProducerPrices, getProducts, getCurrentUserRole } from "@/lib/data";
 import { euroFormatter, formatDate } from "@/lib/format";
+import { redirect } from "next/navigation";
 
 type Props = {
   searchParams: { error?: string; success?: string };
 };
 
 export default async function ProducerPage({ searchParams }: Props) {
+  const role = await getCurrentUserRole();
+  if (role !== "producer" && role !== "admin") {
+    redirect("/login");
+  }
+
   const [allProducts, myPrices] = await Promise.all([getProducts(), getProducerPrices()]);
 
   return (

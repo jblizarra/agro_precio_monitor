@@ -76,23 +76,48 @@ alter table retailer_prices enable row level security;
 alter table producer_prices enable row level security;
 alter table scrape_runs enable row level security;
 
+-- Helper function to check if the current user is an admin without triggering RLS recursion
+create or replace function public.is_admin()
+returns boolean
+security definer
+set search_path = public
+language plpgsql as $$
+begin
+  return exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+end;
+$$;
+
+-- Trigger to automatically create a profile in public.profiles when a user signs up
+create or replace function public.handle_new_user()
+returns trigger
+security definer
+set search_path = public
+language plpgsql as $$
+begin
+  insert into public.profiles (id, email, role)
+  values (new.id, new.email, 'viewer');
+  return new;
+end;
+$$;
+
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
 create policy "Public products are readable" on products for select using (true);
 create policy "Public retailer prices are readable" on retailer_prices for select using (true);
 create policy "Approved producer prices are readable" on producer_prices for select using (status = 'approved');
-create policy "Scrape runs readable by admins" on scrape_runs for select using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin')
-);
+create policy "Scrape runs readable by admins" on scrape_runs for select using (public.is_admin());
 
 create policy "Users read own profile" on profiles for select using (id = auth.uid());
-create policy "Admins read all profiles" on profiles for select using (
-  exists (select 1 from profiles admin_profile where admin_profile.id = auth.uid() and admin_profile.role = 'admin')
-);
+create policy "Admins read all profiles" on profiles for select using (public.is_admin());
 
 create policy "Producers read own producer profile" on producer_profiles for select using (user_id = auth.uid());
 create policy "Producers manage own producer profile" on producer_profiles for all using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "Admins read producer profiles" on producer_profiles for select using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin')
-);
+create policy "Admins read producer profiles" on producer_profiles for select using (public.is_admin());
 
 create policy "Producers insert own pending prices" on producer_prices for insert with check (
   status = 'pending'
@@ -112,9 +137,9 @@ create policy "Producers read own prices" on producer_prices for select using (
 );
 
 create policy "Admins review producer prices" on producer_prices for update using (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin')
+  public.is_admin()
 ) with check (
-  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.role = 'admin')
+  public.is_admin()
 );
 
 insert into products (id, name, category, base_unit, aliases) values

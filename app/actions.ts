@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateProducerPrice } from "@/lib/pricing";
+import { getCurrentUserRole } from "@/lib/data";
 import type { ProducerPriceInput } from "@/lib/types";
 
 export async function submitProducerPrice(formData: FormData) {
@@ -64,6 +65,11 @@ export async function reviewProducerPrice(formData: FormData) {
 
   if (!id || !["approved", "rejected"].includes(status)) {
     redirect("/admin?error=Solicitud invalida");
+  }
+
+  const role = await getCurrentUserRole();
+  if (role !== "admin") {
+    redirect("/admin?error=No autorizado");
   }
 
   const supabase = createSupabaseServerClient();

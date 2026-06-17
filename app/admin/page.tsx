@@ -1,12 +1,18 @@
 import { reviewProducerPrice } from "@/app/actions";
-import { getProducerPrices, getProducts, getScrapeRuns } from "@/lib/data";
+import { getProducerPrices, getProducts, getScrapeRuns, getCurrentUserRole } from "@/lib/data";
 import { euroFormatter, formatDate } from "@/lib/format";
+import { redirect } from "next/navigation";
 
 type Props = {
   searchParams: { error?: string; success?: string };
 };
 
 export default async function AdminPage({ searchParams }: Props) {
+  const role = await getCurrentUserRole();
+  if (role !== "admin") {
+    redirect("/login");
+  }
+
   const [allProducts, pendingPrices, runs] = await Promise.all([
     getProducts(),
     getProducerPrices("pending"),
