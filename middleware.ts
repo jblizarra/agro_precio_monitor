@@ -49,6 +49,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Verificar si intenta acceder a /admin
+  if (pathname.startsWith('/admin')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .single();
+
+    // Si no es admin, redirige a /producer
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/producer', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
