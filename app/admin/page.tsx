@@ -1,119 +1,138 @@
-import { reviewProducerPrice } from "@/app/actions";
-import { getProducerPrices, getProducts, getScrapeRuns, getCurrentUserRole } from "@/lib/data";
-import { euroFormatter, formatDate } from "@/lib/format";
-import { redirect } from "next/navigation";
+'use client';
 
-type Props = {
-  searchParams: { error?: string; success?: string };
-};
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
-export default async function AdminPage({ searchParams }: Props) {
-  const role = await getCurrentUserRole();
-  if (role !== "admin") {
-    redirect("/login");
-  }
+const supabase = createClient();
 
-  const [allProducts, pendingPrices, runs] = await Promise.all([
-    getProducts(),
-    getProducerPrices("pending"),
-    getScrapeRuns()
-  ]);
+export default function AdminPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [role, setRole] = useState<'admin' | 'producer' | 'viewer'>('producer');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      // Crear usuario en auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password: Math.random().toString(36).slice(-8), // Contraseña temporal
+        email_confirm: true,
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Crear perfil
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email,
+            display_name: displayName,
+            role,
+          });
+
+        if (profileError) {
+          setError(profileError.message);
+        } else {
+          setMessage(`Usuario ${email} creado como ${role}`);
+          setEmail('');
+          setDisplayName('');
+          setRole('producer');
+        }
+      }
+    } catch (err) {
+      setError('Error al crear usuario');
+    }
+
+    setLoading(false);
+  };
 
   return (
     <>
       <header className="topbar">
         <div>
-          <p className="eyebrow">Admin</p>
-          <h1>Revision de productores y salud de scraping</h1>
+          <p className="eyebrow">Panel Administrativo</p>
+          <h1>Gestión de Usuarios</h1>
         </div>
+        <button onClick={handleLogout} className="btn-secondary">
+          Cerrar sesión
+        </button>
       </header>
 
-      {searchParams.error ? <div className="status rejected">{searchParams.error}</div> : null}
-      {searchParams.success ? <div className="status approved">Accion aplicada</div> : null}
-
-      <section className="table-panel">
+      <section className="form-panel">
         <div className="section-head">
           <div>
-            <p className="eyebrow">Moderacion</p>
-            <h2>Precios pendientes</h2>
+            <p className="eyebrow">Agregar Usuario</p>
+            <h2>Crear nuevo productor o administrador</h2>
           </div>
-          <span className="muted">{pendingPrices.length} solicitudes</span>
         </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Precio</th>
-                <th>Provincia</th>
-                <th>Fecha</th>
-                <th>Notas</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingPrices.map((price) => {
-                const product = allProducts.find((item) => item.id === price.productId);
-                return (
-                  <tr key={price.id}>
-                    <td>{product?.name ?? price.productId}</td>
-                    <td>{euroFormatter.format(price.normalizedPrice)}/{price.unit}</td>
-                    <td>{price.province}</td>
-                    <td>{formatDate(price.effectiveDate)}</td>
-                    <td>{price.notes ?? "-"}</td>
-                    <td>
-                      <div className="actions">
-                        <form action={reviewProducerPrice}>
-                          <input type="hidden" name="id" value={price.id} />
-                          <input type="hidden" name="status" value="approved" />
-                          <button type="submit">Aprobar</button>
-                        </form>
-                        <form action={reviewProducerPrice}>
-                          <input type="hidden" name="id" value={price.id} />
-                          <input type="hidden" name="status" value="rejected" />
-                          <button className="danger" type="submit">Rechazar</button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
 
-      <section className="table-panel">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">Ingesta</p>
-            <h2>Ultimas capturas</h2>
+        {error && <div className="status rejected">{error}</div>}
+        {message && <div className="status approved">{message}</div>}
+
+        <form className="form-grid" onSubmit={handleAddUser}>
+          <label>
+            Correo electrónico
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="usuario@ejemplo.com"
+              required
+              disabled={loading}
+            />
+          </label>
+
+          <label>
+            Nombre completo
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Juan Pérez"
+              disabled={loading}
+            />
+          </label>
+
+          <label>
+            Rol
+            <select value={role} onChange={(e) => setRole(e.target.value as any)} disabled={loading}>
+              <option value="viewer">Visualizador</option>
+              <option value="producer">Productor</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
+
+          <div className="actions full">
+            <button type="submit" disabled={loading}>
+              {loading ? 'Creando...' : 'Crear usuario'}
+            </button>
           </div>
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Cadena</th>
-                <th>Estado</th>
-                <th>Filas</th>
-                <th>Inicio</th>
-                <th>Mensaje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => (
-                <tr key={run.id}>
-                  <td>{run.retailer}</td>
-                  <td><span className={`status ${run.status}`}>{run.status}</span></td>
-                  <td>{run.insertedRows}</td>
-                  <td>{formatDate(run.startedAt)}</td>
-                  <td>{run.message ?? "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        </form>
+
+        <p className="muted">
+          El usuario recibirá un email para confirmar su cuenta y establecer su contraseña.
+        </p>
       </section>
     </>
   );
