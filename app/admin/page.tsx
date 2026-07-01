@@ -24,7 +24,6 @@ export default async function AdminPage({ searchParams }: Props) {
   const supabase = createSupabaseServerClient();
   const user = supabase ? (await supabase.auth.getUser()).data.user : null;
 
-
   return (
     <>
       <header className="topbar">
@@ -179,4 +178,3 @@ export default async function AdminPage({ searchParams }: Props) {
     </>
   );
 }
-
