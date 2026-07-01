@@ -1,7 +1,8 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { buildComparisonRows, newestRetailerPrices } from "@/lib/pricing";
 import { producerPrices, producerProfiles, products, retailerPrices, scrapeRuns } from "@/lib/sample-data";
-import type { ComparisonRow, ProducerPrice, Product, RetailerPrice, ScrapeRun } from "@/lib/types";
+import type { ComparisonRow, ProducerPrice, Product, RetailerPrice, ScrapeRun, UserProfile } from "@/lib/types";
+
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = createSupabaseServerClient();
@@ -122,7 +123,7 @@ export async function getComparisonRows(): Promise<ComparisonRow[]> {
 
 export async function getCurrentUserRole(): Promise<"viewer" | "producer" | "admin"> {
   const supabase = createSupabaseServerClient();
-  if (!supabase) return "admin";
+  if (!supabase) return "admin"; // En modo demo local sin Supabase, todos son admin
 
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) return "viewer";
@@ -133,5 +134,43 @@ export async function getCurrentUserRole(): Promise<"viewer" | "producer" | "adm
     .eq("id", authData.user.id)
     .single();
 
-  return data?.role ?? "viewer";
+  const currentRole = data?.role ?? "viewer";
+
+  // Autopromover al administrador inicial si el correo coincide con ADMIN_EMAIL
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (adminEmail && authData.user.email === adminEmail && currentRole !== "admin") {
+    const serviceClient = createSupabaseServiceClient();
+    if (serviceClient) {
+      await serviceClient
+        .from("profiles")
+        .update({ role: "admin" })
+        .eq("id", authData.user.id);
+      return "admin";
+    }
+  }
+
+  return currentRole;
 }
+
+export async function getAllProfiles(): Promise<UserProfile[]> {
+  const role = await getCurrentUserRole();
+  if (role !== "admin") return [];
+
+  const supabase = createSupabaseServiceClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    createdAt: row.created_at
+  }));
+}
+

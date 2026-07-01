@@ -75,3 +75,11 @@ export type ProducerPriceInput = {
   effectiveDate: string;
   notes?: string;
 };
+
+export type UserProfile = {
+  id: string;
+  email: string | null;
+  role: UserRole;
+  createdAt: string;
+};
+

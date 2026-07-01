@@ -1,5 +1,7 @@
 # AgroPrecio Monitor
 
+🌐 **Live Demo:** [https://agro-precio-monitor.vercel.app/](https://agro-precio-monitor.vercel.app/)
+
 MVP full-stack para comparar precios normalizados de supermercados espanoles con precios publicados por productores. Esta version esta preparada para Vercel, Next.js App Router y Supabase.
 
 ## Stack
@@ -39,12 +41,12 @@ CRON_SECRET=
 1. Conecta el repositorio en Vercel.
 2. Anade las variables de entorno anteriores.
 3. Despliega con el comando por defecto `next build`.
-4. Vercel ejecutara el cron definido en `vercel.json` cada 8 horas.
+4. Vercel ejecutara el cron definido en `vercel.json` diariamente a las 08:00 AM.
 
 Para invocar el cron manualmente:
 
 ```powershell
-curl -H "Authorization: Bearer <CRON_SECRET>" https://tu-app.vercel.app/api/cron/scrape-prices
+curl -H "Authorization: Bearer <CRON_SECRET>" https://agro-precio-monitor.vercel.app/api/cron/scrape-prices
 ```
 
 ## Flujo MVP

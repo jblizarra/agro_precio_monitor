@@ -1,7 +1,8 @@
-import { reviewProducerPrice } from "@/app/actions";
-import { getProducerPrices, getProducts, getScrapeRuns, getCurrentUserRole } from "@/lib/data";
+import { reviewProducerPrice, updateUserRoleAction } from "@/app/actions";
+import { getProducerPrices, getProducts, getScrapeRuns, getCurrentUserRole, getAllProfiles } from "@/lib/data";
 import { euroFormatter, formatDate } from "@/lib/format";
 import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Props = {
   searchParams: { error?: string; success?: string };
@@ -13,11 +14,16 @@ export default async function AdminPage({ searchParams }: Props) {
     redirect("/login");
   }
 
-  const [allProducts, pendingPrices, runs] = await Promise.all([
+  const [allProducts, pendingPrices, runs, profiles] = await Promise.all([
     getProducts(),
     getProducerPrices("pending"),
-    getScrapeRuns()
+    getScrapeRuns(),
+    getAllProfiles()
   ]);
+
+  const supabase = createSupabaseServerClient();
+  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
+
 
   return (
     <>
@@ -115,6 +121,62 @@ export default async function AdminPage({ searchParams }: Props) {
           </table>
         </div>
       </section>
+
+      <section className="table-panel">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow">Seguridad</p>
+            <h2>Gestión de Usuarios</h2>
+          </div>
+          <span className="muted">{profiles.length} usuarios registrados</span>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Rol Actual</th>
+                <th>Fecha Registro</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profiles.map((profile) => {
+                const isSelf = user?.id === profile.id;
+                return (
+                  <tr key={profile.id}>
+                    <td>
+                      <strong>{profile.email ?? "Sin correo"}</strong> {isSelf && <span className="status approved" style={{ minHeight: "20px", minWidth: "50px", fontSize: "0.7rem", padding: "0 6px", marginLeft: "6px" }}>Tú</span>}
+                    </td>
+                    <td>
+                      <span className={`status ${profile.role === "admin" ? "approved" : profile.role === "producer" ? "skipped" : "pending"}`}>
+                        {profile.role}
+                      </span>
+                    </td>
+                    <td>{formatDate(profile.createdAt)}</td>
+                    <td>
+                      {isSelf ? (
+                        <span className="muted">No modificable</span>
+                      ) : (
+                        <form action={updateUserRoleAction} className="actions" style={{ alignItems: "center", display: "flex", gap: "8px" }}>
+                          <input type="hidden" name="userId" value={profile.id} />
+                          <select name="role" defaultValue={profile.role} style={{ minHeight: "34px", padding: "4px 8px" }}>
+                            <option value="viewer">viewer</option>
+                            <option value="producer">producer</option>
+                            <option value="admin">admin</option>
+                          </select>
+                          <button type="submit" style={{ minHeight: "34px", padding: "0 12px" }}>Actualizar</button>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </>
   );
 }
+

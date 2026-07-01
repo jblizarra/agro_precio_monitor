@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { validateProducerPrice } from "@/lib/pricing";
 import { getCurrentUserRole } from "@/lib/data";
 import type { ProducerPriceInput } from "@/lib/types";
+
 
 export async function submitProducerPrice(formData: FormData) {
   const input: ProducerPriceInput = {
@@ -87,3 +88,111 @@ export async function reviewProducerPrice(formData: FormData) {
   revalidatePath("/admin");
   redirect("/admin?success=reviewed");
 }
+
+export async function signInAction(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    redirect("/login?error=Email y contraseña requeridos");
+  }
+
+  const supabase = createSupabaseServerClient();
+  if (!supabase) {
+    redirect("/login?error=Supabase no esta configurado");
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/producer");
+  redirect("/");
+}
+
+export async function signUpAction(formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    redirect("/login?error=Email y contraseña requeridos");
+  }
+
+  const supabase = createSupabaseServerClient();
+  if (!supabase) {
+    redirect("/login?error=Supabase no esta configurado");
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/login?success=Registro exitoso. Inicia sesion o verifica tu correo.");
+}
+
+export async function signOutAction() {
+  const supabase = createSupabaseServerClient();
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/producer");
+  redirect("/login");
+}
+
+export async function updateUserRoleAction(formData: FormData) {
+  const targetUserId = String(formData.get("userId") ?? "");
+  const newRole = String(formData.get("role") ?? "");
+
+  if (!targetUserId || !["viewer", "producer", "admin"].includes(newRole)) {
+    redirect("/admin?error=Datos de rol invalidos");
+  }
+
+  // Verificar que el usuario actual es admin
+  const currentRole = await getCurrentUserRole();
+  if (currentRole !== "admin") {
+    redirect("/admin?error=No autorizado");
+  }
+
+  const supabase = createSupabaseServerClient();
+  if (!supabase) {
+    redirect("/admin?error=Supabase no esta configurado");
+  }
+
+  // Evitar que el administrador se cambie el rol a sí mismo
+  const { data: authData } = await supabase.auth.getUser();
+  if (authData.user && authData.user.id === targetUserId) {
+    redirect("/admin?error=No puedes cambiar tu propio rol");
+  }
+
+  const serviceClient = createSupabaseServiceClient();
+  if (!serviceClient) {
+    redirect("/admin?error=Error de inicializacion del servicio");
+  }
+
+  const { error } = await serviceClient
+    .from("profiles")
+    .update({ role: newRole })
+    .eq("id", targetUserId);
+
+  if (error) {
+    redirect(`/admin?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/admin");
+  redirect("/admin?success=Rol de usuario actualizado");
+}
+
