@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SidebarNav } from "@/components/SidebarNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,13 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span>Monitor</span>
               </div>
             </Link>
-            <nav className="nav" aria-label="Secciones">
-              <Link className="active" href="/">Dashboard</Link>
-              <Link href="/comparador">Comparador</Link>
-              <Link href="/producer">Panel productor</Link>
-              <Link href="/admin">Admin</Link>
-              <Link href="/login">Login</Link>
-            </nav>
+            <SidebarNav />
             <p className="sidebar-note">
               MVP para Vercel con Supabase, roles y captura programada de precios.
             </p>
@@ -37,3 +32,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
